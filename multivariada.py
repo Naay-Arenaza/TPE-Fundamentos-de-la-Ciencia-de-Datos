@@ -3,10 +3,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns 
-from sklearn.model_selection import train_test_split
+import statsmodels.api as sm
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report
 from wget import download
 from os import path, listdir
 #Descargamos csv
@@ -70,22 +68,18 @@ y = raw_dataset[dependiente]
 # --- 2. Escalar los datos ---
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
+X_scaled_const = sm.add_constant(X_scaled)
 
-# --- 3. Dividir y Entrenar ---
-# Dividimos para entrenar el calculador y luego validar
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
-modelo = LogisticRegression()
-modelo.fit(X_train, y_train)
+# Entrenar regresión con todo el dataset
+modelo = sm.Logit(y,X_scaled_const)
+resultado = modelo.fit()
 
-# --- 4. LOS RESULTADOS (Los Coeficientes) ---
-coefs = pd.DataFrame(
-    modelo.coef_[0],
-    index=independientes,
-    columns=['Coeficiente (Peso Estadístico)']
-)
-print("--- VALIDACIÓN DE LA HIPÓTESIS ---")
-print(coefs)
+# --- 4. RESULTADOS---
+tabla = pd.DataFrame({
+    "Coeficiente": resultado.params,
+    "P-Value": resultado.pvalues
+})
 
-# --- 5. Validación del Test ---
-y_pred = modelo.predict(X_test)
-print(f"\nPrecisión de la Validación: {accuracy_score(y_test, y_pred):.3f}")
+tabla.index = ['c', 'ProductRelated_Duration', 'BounceRates']
+print(tabla)
+

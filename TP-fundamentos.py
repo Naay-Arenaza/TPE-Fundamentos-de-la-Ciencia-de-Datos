@@ -1,8 +1,8 @@
 import pandas as pd
-
+import matplotlib.pyplot as plt
+import numpy as np
 from wget import download
 from os import path, listdir
-
 #Descargamos csv
 if not path.exists("online_shoppers_intention.csv"):
   download("https://raw.githubusercontent.com/Naay-Arenaza/TPE-Fundamentos-de-la-Ciencia-de-Datos/main/online_shoppers_intention.csv")
@@ -17,27 +17,68 @@ print(f"El contenido de la carpeta es: {lista_archivos}")
 raw_dataset = pd.read_csv("online_shoppers_intention.csv")
 #print(raw_dataset)
 print(raw_dataset.describe())
+print("")
 print(raw_dataset.describe(include='object'))
+print("")
 print(raw_dataset.info())
-print(raw_dataset.isna().sum())
-
+#print(raw_dataset.isna().sum())
+print("")
 
 #DUPLICADOS:
 # Contamos los duplicados, daba 125, los mostramos para ver que onda y desp los eliminamos, para ello debemos sacar a todos menos uno, con lo cual necesitamos pasar keep="first".
 #  Vamos a usar el método drop_duplicates():
 # contamos la cantidad de duplicados
-print(raw_dataset.duplicated().sum())
+##print(raw_dataset.duplicated().sum())
 # imprimimos las filas duplicadas
-print(raw_dataset[raw_dataset.duplicated(keep=False)])
+##print(raw_dataset[raw_dataset.duplicated(keep=False)])
 # eliminamos los duplicados
-print(raw_dataset.drop_duplicates(keep="first", inplace=True))
+##print(raw_dataset.drop_duplicates(keep="first", inplace=True))
 # contamos la cantidad de duplicados
-print(raw_dataset.duplicated().sum())
+##print(raw_dataset.duplicated().sum())
 #La probabilidad de que dos sesiones diferentes (dos usuarios distintos) hayan generado por "coincidencia" 18 valores exactamente idénticos (hasta el último decimal de tiempo y tasas) es matemáticamente imposible.
 #Conclusión: Los 125 duplicados no son casualidades, son 100% errores de registro (el sistema guardó la misma sesión varias veces).
 
 
+#print(raw_dataset[['ProductRelated_Duration', 'BounceRates', 'Revenue']].where)
 
+#py -m pip install scikit-learn
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+
+# --- 1. Definir X (factores) e y (objetivo) ---
+independientes = ['ProductRelated_Duration', 'BounceRates']
+dependiente = 'Revenue'
+X = raw_dataset[independientes]
+y = raw_dataset[dependiente]
+
+# --- 2. Escalar los datos ---
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# --- 3. Dividir y Entrenar ---
+# Dividimos para entrenar el calculador y luego validar
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.3, random_state=42)
+modelo = LogisticRegression()
+modelo.fit(X_train, y_train)
+
+# --- 4. LOS RESULTADOS (Los Coeficientes) ---
+coefs = pd.DataFrame(
+    modelo.coef_[0],
+    index=independientes,
+    columns=['Coeficiente (Peso Estadístico)']
+)
+print("--- VALIDACIÓN DE LA HIPÓTESIS ---")
+print(coefs)
+
+# --- 5. Validación del Test ---
+
+y_pred = modelo.predict(X_test)
+print(f"\nPrecisión de la Validación: {accuracy_score(y_test, y_pred):.3f}")
+
+  
 
 
 # Revisa la columna 'Region'
@@ -46,7 +87,7 @@ print(raw_dataset.duplicated().sum())
 
 # Revisa la columna 'Browser'
 #print("\nValores únicos en Browser:")
-print(raw_dataset['TrafficType'].value_counts())
+#print(raw_dataset['TrafficType'].value_counts())
 
 #print(raw_dataset['VisitorType'])
 
